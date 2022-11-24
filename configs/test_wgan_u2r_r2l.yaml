@@ -1,0 +1,5 @@
+normalize: true
+attack: U2R
+name: u2r_r2l
+save_model: ./saved_models/
+# checkpoint: checkpoints/u2r_r2l/epoch_33402.pt

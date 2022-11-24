@@ -1,0 +1,5 @@
+normalize: true
+attack: DoS
+name: dos4
+save_model: ./saved_models/
+# checkpoint: ./checkpoints/dos4/epoch_2241.pt
