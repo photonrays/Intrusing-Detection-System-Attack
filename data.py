@@ -185,8 +185,8 @@ def preprocess(dataframe, normalize=False):
         preprocessed[non_zero_std_columns] = (
             preprocessed[non_zero_std_columns] - mean[non_zero_std_columns]) / std[non_zero_std_columns]
         min_max_scaler = preprocessing.MinMaxScaler()
-        attributes_dataframe = min_max_scaler.fit_transform(
-            attributes_dataframe)
+        # attributes_dataframe = min_max_scaler.fit_transform(
+        #     attributes_dataframe)
 
     # split into (attributes, attack_class) and remove class from attributes
     attributes_dataframe = preprocessed.drop(
