@@ -58,6 +58,7 @@ _DTYPES = {
     'difficulty_level': pd.CategoricalDtype(list(range(22)), ordered=True)
 }
 
+
 def load_train():
     """
     Loads trainingset as a Pandas dataframe.
@@ -70,6 +71,7 @@ def load_train():
             dtype=_DTYPES
         )
     )
+
 
 def load_test():
     """
@@ -84,6 +86,7 @@ def load_test():
         )
     )
 
+
 def load_val():
     """
     Loads validationset as a Pandas dataframe.
@@ -97,13 +100,15 @@ def load_val():
         )
     )
 
+
 def _add_attack_class(data):
     """
     Adds attack_class column to dataframe.
     """
     dtype = pd.CategoricalDtype(['Normal', 'DoS', 'R2L', 'U2R', 'Probe'])
     dos = ['back', 'land', 'neptune', 'pod', 'smurf', 'teardrop']
-    r2l = ['ftp_write', 'guess_passwd', 'imap', 'multihop', 'phf', 'spy', 'warezclient', 'warezmaster']
+    r2l = ['ftp_write', 'guess_passwd', 'imap', 'multihop',
+           'phf', 'spy', 'warezclient', 'warezmaster']
     u2r = ['buffer_overflow', 'loadmodule', 'perl', 'rootkit']
     probe = ['ipsweep', 'nmap', 'portsweep', 'satan']
     column = pd.Series(['Normal'] * len(data), dtype=dtype)
@@ -113,6 +118,7 @@ def _add_attack_class(data):
     column[data['class'].isin(probe)] = 'Probe'
     data['attack_class'] = column
     return data
+
 
 def preprocess(dataframe, normalize=False):
     """
@@ -138,12 +144,13 @@ def preprocess(dataframe, normalize=False):
     # difficulty_level is a categorical column, but we do not want to one-hot encode it, and neither should it be considered as numeric
     numeric_columns = list(
         set(preprocessed.columns)
-      - set(label_columns)
-      - set(categorical_columns)
-      - set(boolean_columns)
-      - set(['difficulty_level'])
+        - set(label_columns)
+        - set(categorical_columns)
+        - set(boolean_columns)
+        - set(['difficulty_level'])
     )
-    categorical_columns = list(set(categorical_columns) & set(preprocessed.columns))
+    categorical_columns = list(
+        set(categorical_columns) & set(preprocessed.columns))
     label_columns = list(set(label_columns) & set(preprocessed.columns))
     boolean_columns = list(set(boolean_columns) & set(preprocessed.columns))
 
@@ -154,14 +161,15 @@ def preprocess(dataframe, normalize=False):
 
     #attributes_dataframe = preprocessed.drop(columns=['class', 'attack_class', 'difficulty_level'])
     #attack_class_dataframe = preprocessed['attack_class']
-    #print(attributes_dataframe.iloc[0])
+    # print(attributes_dataframe.iloc[0])
 
     # normalize
-    
+
     if normalize:
         # laod trainingset since the numeric columns should be standardized in accordance with the trainingset,
         # and we do not know if the dataframe represents the trainingset
-        training = pd.read_csv('data/KDDTrain.csv', header=None, names=_HEADERS, usecols=numeric_columns)
+        training = pd.read_csv(
+            'data/KDDTrain.csv', header=None, names=_HEADERS, usecols=numeric_columns)
         mean = training.mean(axis=0)
         std = training.std(axis=0)
 
@@ -170,21 +178,26 @@ def preprocess(dataframe, normalize=False):
         zero_std_columns = zip(zero_std_columns.index, zero_std_columns)
         zero_std_columns = filter(itemgetter(1), zero_std_columns)
         zero_std_columns = list(map(itemgetter(0), zero_std_columns))
-        non_zero_std_columns = list(set(numeric_columns) - set(zero_std_columns))
+        non_zero_std_columns = list(
+            set(numeric_columns) - set(zero_std_columns))
 
         preprocessed[zero_std_columns] = 0
-        preprocessed[non_zero_std_columns] = (preprocessed[non_zero_std_columns] - mean[non_zero_std_columns]) / std[non_zero_std_columns]
-        #min_max_scaler = preprocessing.MinMaxScaler()
-        #attributes_dataframe = min_max_scaler.fit_transform(attributes_dataframe)
+        preprocessed[non_zero_std_columns] = (
+            preprocessed[non_zero_std_columns] - mean[non_zero_std_columns]) / std[non_zero_std_columns]
+        min_max_scaler = preprocessing.MinMaxScaler()
+        attributes_dataframe = min_max_scaler.fit_transform(
+            attributes_dataframe)
 
     # split into (attributes, attack_class) and remove class from attributes
-    attributes_dataframe = preprocessed.drop(columns=['class', 'attack_class', 'difficulty_level'])
+    attributes_dataframe = preprocessed.drop(
+        columns=['class', 'attack_class', 'difficulty_level'])
     attack_class_dataframe = preprocessed['attack_class']
-    #print(attributes_dataframe.iloc[0])
+    # print(attributes_dataframe.iloc[0])
 
     # one-hot encoding
-    attributes_dataframe = pd.get_dummies(attributes_dataframe, columns=categorical_columns)
-    #print(attributes_dataframe.iloc[0])
+    attributes_dataframe = pd.get_dummies(
+        attributes_dataframe, columns=categorical_columns)
+    # print(attributes_dataframe.iloc[0])
 
     # make attack class binary (0 = normal, 1 = malicious)
     binary_attack_class = np.zeros_like(attack_class_dataframe, dtype=np.bool)
@@ -194,15 +207,17 @@ def preprocess(dataframe, normalize=False):
     #attributes = attributes_dataframe.astype(np.float)
     return attributes, binary_attack_class
 
+
 def split_features(dataframe, selected_attack_class):
     normal = dataframe[dataframe['attack_class'].isin(['Normal'])]
     normal_ff = normal
     normal_nff = remove_intrinsic(normal)
 
-    features = dataframe[dataframe['attack_class'].isin([selected_attack_class])]
+    features = dataframe[dataframe['attack_class'].isin(
+        [selected_attack_class])]
     #test = len(dataframe[dataframe['attack_class'].isin([selected_attack_class])])
-    #print(features.iloc[0])
-    #print(features.shape)
+    # print(features.iloc[0])
+    # print(features.shape)
     functionnal_features = features
     non_functionnal_features = remove_intrinsic(features)
 
@@ -212,7 +227,7 @@ def split_features(dataframe, selected_attack_class):
         functionnal_features = remove_host_based(functionnal_features)
         non_functionnal_features = remove_time_based(non_functionnal_features)
         test = len(non_functionnal_features)
-        #print(non_functionnal_features.shape)
+        # print(non_functionnal_features.shape)
 
         normal_ff = remove_content(normal_ff)
         normal_ff = remove_host_based(normal_ff)
@@ -236,11 +251,13 @@ def split_features(dataframe, selected_attack_class):
 
     return functionnal_features, non_functionnal_features, normal_ff, normal_nff
 
+
 def get_content_columns():
     """
     Returns the content column names.
     """
     return _CONTENT
+
 
 def get_host_based_columns():
     """
@@ -248,11 +265,13 @@ def get_host_based_columns():
     """
     return _HOST_BASED
 
+
 def get_time_based_columns():
     """
     Returns the time based column names.
     """
     return _TIME_BASED
+
 
 def remove_content(dataframe):
     """
@@ -260,17 +279,20 @@ def remove_content(dataframe):
     """
     return dataframe.drop(columns=_CONTENT).reset_index(drop=True)
 
+
 def remove_time_based(dataframe):
     """
     Removes all time based features from the dataframe.
     """
     return dataframe.drop(columns=_TIME_BASED).reset_index(drop=True)
 
+
 def remove_host_based(dataframe):
     """
     Removes all host based features from the dataframe.
     """
     return dataframe.drop(columns=_HOST_BASED).reset_index(drop=True)
+
 
 def remove_intrinsic(dataframe):
     """
