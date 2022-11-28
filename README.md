@@ -24,4 +24,4 @@ Giáo viên hướng dẫn: Nguyễn Tấn Cầm
 
 ## Credit
 
-All credit for the repository give to [ChrisFugl](https://github.com/ChrisFugl)
+All credit for the repository goes to [ChrisFugl](https://github.com/ChrisFugl)
